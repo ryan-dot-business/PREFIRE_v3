@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="PREF*RE instant heat pouches. Air-activated warmth for gaming, climbing and everything outside.">
+<title>PREF*RE Homepage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,800..900&family=Inter:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: fixed nav floating over a full-bleed, layered hero slider; two photo tiles below; quiet footer.
+   Single deliberate dark look taken from Ryan's Figma ("PREF*RE — New Site"). */
+:root{
+  color-scheme: dark;
+  --ink:#15110e;          /* page ground (Figma mobile frame) */
+  --night:#0b0907;        /* footer */
+  --paper:#ffffff;
+  --paper-ink:#111111;    /* text on white panels */
+  --hot:#ffec09;          /* PREF*RE yellow, focus + accents only */
+  --t-80:rgba(255,255,255,.8);
+  --t-60:rgba(255,255,255,.6);
+  --t-30:rgba(255,255,255,.3);
+  --k-50:rgba(0,0,0,.5);
+  --k-20:rgba(0,0,0,.2);
+  --rule:rgba(68,68,68,.12);
+
+  --f-display:"Archivo","Arial Narrow","Helvetica Neue Condensed",Impact,sans-serif;
+  --f-body:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --f-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Segoe UI",sans-serif;
+
+  --gx:max(20px, env(safe-area-inset-left, 0px));
+  --gxr:max(20px, env(safe-area-inset-right, 0px));
+  --ease-io:cubic-bezier(.76,0,.2,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --bar-h:63px;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--ink);color:var(--paper);font-family:var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body.locked{overflow:hidden}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+ul{list-style:none;margin:0;padding:0}
+p,h1,h2,h3{margin:0}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--hot);outline-offset:3px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ico{fill:currentColor;display:block}
+
+/* ───────── NAV ───────── */
+.nav{position:fixed;inset:0 0 auto;z-index:50;color:var(--paper);transition:color .16s ease}
+.nav.menu-open{transition:color .24s ease}
+.nav.menu-open{color:var(--paper-ink)}
+/* Layers, bottom to top: bar-bg (scrolled/mobile states) · surface (white bar + dropdown sheet as ONE layer) · panel content · bar content.
+   The white bar and the sheet live inside one element and fade with one opacity, so they composite as a single shape: no seam, no double edge. */
+.bar-bg{position:absolute;inset:0 0 auto;height:var(--bar-h);z-index:0;background-color:rgba(21,17,14,0);transition:background-color .2s ease,backdrop-filter .2s ease}
+.nav.scrolled .bar-bg{background-color:rgba(21,17,14,.62);backdrop-filter:blur(15px) saturate(1.2);-webkit-backdrop-filter:blur(15px) saturate(1.2)}
+.nav.m-open .bar-bg{background-color:#000}
+.surface{position:absolute;inset:0 0 auto;z-index:1;pointer-events:none;opacity:0;filter:drop-shadow(0 4px 7px rgba(0,0,0,.35));transition:opacity .16s ease}
+.nav.menu-open .surface{opacity:1;transition:opacity .24s ease}
+.surf-bar{position:absolute;left:0;right:0;top:0;height:var(--bar-h);background:var(--paper)}
+.surf-sheet{position:absolute;top:calc(var(--bar-h) - 2px);left:0;width:0;height:0;background:var(--paper);border-radius:0 0 30px 30px;
+  transition:left .42s var(--ease-out),width .42s var(--ease-out),height .42s var(--ease-out)}
+.surf-sheet.snap{transition:none}
+.bar{position:relative;z-index:3;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;
+  padding-block:calc(16px + env(safe-area-inset-top,0px)) 12px;padding-left:var(--gx);padding-right:var(--gxr)}
+.bar-l{display:flex;align-items:center;gap:12px;justify-self:start}
+.bar-r{display:flex;align-items:center;gap:12px;justify-self:end}
+.logo{display:grid;place-items:center;width:35px;height:35px;border-radius:8px;transition:transform .5s var(--ease-out)}
+.logo svg{width:33px;height:30px;rotate:-4.23deg}
+.logo:hover{transform:rotate(-24deg) scale(1.06)}
+.logo-m{display:none}
+.links{display:flex;gap:50px;align-items:center}
+.pill{position:relative;font-weight:800;font-size:14px;letter-spacing:-.04em;line-height:1.2;padding:6px 9px;border-radius:5px;transition:background-color .2s ease}
+.pill::after{content:"";position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:0;transition:opacity .2s ease}
+.pill:hover::after,.pill[aria-expanded="true"]::after{opacity:.08}
+.icon-btn{width:35px;height:35px;display:grid;place-items:center;border-radius:20px;position:relative;transition:transform .25s var(--ease-out)}
+.icon-btn::after{content:"";position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:0;transition:opacity .2s}
+.icon-btn:hover::after,.icon-btn[aria-expanded="true"]::after{opacity:.08}
+.icon-btn:active{transform:scale(.92)}
+.burger{display:none}
+.burger span{position:absolute;left:8px;width:19px;height:2.2px;border-radius:2px;background:currentColor;transition:transform .45s var(--ease-out),opacity .2s}
+.burger span:nth-child(1){top:11px}.burger span:nth-child(2){top:16.5px}.burger span:nth-child(3){top:22px}
+.nav.m-open .burger span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+.nav.m-open .burger span:nth-child(2){opacity:0;transform:scaleX(.2)}
+.nav.m-open .burger span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+
+/* dropdown panels */
+/* panel = content only; its white comes from .surf-sheet. In: fades with the surface. Out: fades with it, at the same speed. */
+.panel{position:absolute;top:calc(var(--bar-h) - 2px);left:0;z-index:2;visibility:hidden;pointer-events:none;opacity:0;
+  transition:opacity .16s ease,visibility 0s linear .16s}
+.panel.is-open{visibility:visible;pointer-events:auto;opacity:1;transition:opacity .24s ease,visibility 0s}
+.panel-in{color:var(--paper-ink);padding:2px 40px 30px}
+.stg{opacity:0;transform:translateY(-8px);transition:opacity 0s linear .16s,transform 0s linear .16s}
+.panel.is-open .stg{opacity:1;transform:none;transition:opacity .45s ease,transform .6s var(--ease-out);transition-delay:calc(var(--i,0) * 28ms + 90ms)}
+.heat{display:flex;align-items:flex-end;gap:32px}
+.prods{display:flex;align-items:flex-end;gap:34px;padding:31px 5px 0}
+.prod{display:flex;flex-direction:column;align-items:center;gap:15px}
+.prod-img{display:block;transition:transform .5s var(--ease-out)}
+.prod-img img{width:131px;height:151px;object-fit:contain}
+.prod.solo .prod-img img{width:93px;height:120px}
+.prod:hover .prod-img{transform:translateY(-6px) rotate(-3deg)}
+.prod-meta{display:flex;flex-direction:column;align-items:center;gap:6px}
+.prod-name{font-weight:800;font-size:14px;letter-spacing:-.04em;line-height:1.2}
+.prod-ll{display:flex;gap:14px;font-weight:500;font-size:12px;letter-spacing:-.02em;color:var(--k-50)}
+.prod-ll a{text-decoration:underline;text-underline-offset:2px;transition:color .15s}
+.prod-ll a:hover{color:var(--paper-ink)}
+.vr{width:2px;height:198px;background:var(--rule);border-radius:2px;flex:none}
+.list{padding-top:20px;display:flex;flex-direction:column;gap:8px;min-width:122px}
+.lab{font-weight:800;font-size:12px;letter-spacing:.02em;color:var(--k-20);text-transform:uppercase}
+.list ul{display:flex;flex-direction:column;gap:12px}
+/* hover: black underline. selected: same pill as HEAT when its dropdown is open; negative margin keeps the text on its column */
+.list a{font-weight:700;font-size:14px;letter-spacing:-.02em;display:inline-block;padding:6px 9px;margin:-6px -9px;border-radius:5px;
+  text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;text-decoration-color:transparent;
+  transition:text-decoration-color .15s ease,background-color .2s ease}
+.list a:hover{text-decoration-color:var(--paper-ink)}
+.list a[aria-current="true"]{background-color:rgba(0,0,0,.07)}
+
+/* mobile full menu */
+.mnav{position:fixed;left:0;right:0;top:var(--bar-h);bottom:0;z-index:49;background:#000;
+  overflow-y:auto;padding-block:20px 48px;padding-left:var(--gx);padding-right:var(--gxr);
+  visibility:hidden;clip-path:inset(0 0 100% 0);transition:clip-path .45s var(--ease-io),visibility 0s .45s}
+.nav.m-open + .mnav{visibility:visible;clip-path:inset(0 0 0 0);transition:clip-path .6s var(--ease-io),visibility 0s}
+.mgroup{display:flex;flex-direction:column;gap:4px;margin:0}
+.mnav-in{display:flex;flex-direction:column;gap:38px}
+.mlab{font-weight:800;font-size:12px;letter-spacing:-.05em;color:#8a8a8a}
+.mnav a.big{font-weight:800;font-size:36px;letter-spacing:-.05em;line-height:1.2;display:block;width:max-content;max-width:100%}
+.mnav .mi{opacity:0;transform:translateY(22px);transition:opacity .2s,transform .2s}
+.nav.m-open + .mnav .mi{opacity:1;transform:none;transition:opacity .5s ease,transform .8s var(--ease-out);transition-delay:calc(var(--i,0)*35ms + 160ms)}
+
+/* ───────── HERO SLIDER ───────── */
+.hero{position:relative;height:clamp(560px,175vw,720px);overflow:hidden;background:#1f1708;touch-action:pan-y;isolation:isolate}
+.slide{position:absolute;inset:0;visibility:hidden;z-index:0;overflow:hidden}
+.slide.is-active,.slide.is-out{visibility:visible;z-index:1}
+.slide.is-in{visibility:visible;z-index:2}
+/* backgrounds: one pre-cropped image per breakpoint with every gradient/dim baked in; only transform + opacity ever animate */
+.s-bg{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;contain:paint}
+.s-bg picture{display:contents}
+.s-bg img{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;backface-visibility:hidden}
+.s-stage{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:22px;
+  padding-top:calc(var(--bar-h) + 10px);padding-bottom:62px;padding-left:var(--gx);padding-right:var(--gxr);text-align:center}
+.slide[data-align="start"] .s-stage{align-items:flex-start;text-align:left;gap:16px}
+.s-pouch{flex:0 1 auto;height:54%;min-height:0;display:flex;justify-content:center;align-items:center;will-change:transform}
+.tilt{height:100%;transition:translate .9s cubic-bezier(.2,.8,.2,1),rotate .9s cubic-bezier(.2,.8,.2,1)}
+.s-pouch img{height:100%;width:auto;max-width:82vw;object-fit:contain;filter:drop-shadow(0 30px 40px rgba(0,0,0,.45));animation:float 7s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-12px) rotate(1.4deg)}}
+/* G2: two pouches overlapping, black set back, yellow forward; each travels at its own speed */
+/* Positions are solved from each pouch's solid outline (the PNGs carry a soft shadow off to the right/bottom),
+   so the pair is centred on the pouches themselves, not on their image boxes. Units are the slide's size (cqw/cqh). */
+.slide[data-k="g2"]{container-type:size}
+.duo{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.duo .s-pouch{position:absolute;transform-origin:33% 47%}
+/* phone: fanned pair, each pouch ~42% of the hero tall, centred on the column above the copy */
+.duo .p-back{height:39cqh;left:calc(34cqw - 14.74cqh);top:21.8cqh;rotate:-9deg;z-index:1}
+.duo .p-front{height:40.9cqh;left:calc(68cqw - 13.9cqh);top:20.9cqh;rotate:7deg;z-index:2}
+.duo .s-pouch img{filter:none}  /* the G2 cut-outs carry their own soft shadow */
+.duo .p-back img{animation-delay:-3.5s}
+.s-dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:2}
+.s-copy{display:flex;flex-direction:column;gap:10px;align-items:inherit;max-width:min(400px,100%);will-change:transform}
+.slide[data-align="start"] .s-copy{max-width:335px;gap:16px}
+.slide[data-align="start"] .s-copy .s-txt{display:flex;flex-direction:column;gap:8px}
+.eyebrow{font-family:var(--f-ui);font-weight:700;font-size:12px;letter-spacing:-.04em;line-height:1;color:var(--t-60);text-transform:uppercase}
+.slide[data-align="start"] .eyebrow{color:var(--paper)}
+.display{font-family:var(--f-display);font-weight:900;font-stretch:66%;font-size:35px;line-height:.86;letter-spacing:-.035em;text-transform:uppercase;text-wrap:balance;padding-top:.06em}
+.lede{font-weight:500;font-size:14px;line-height:1.2;letter-spacing:-.02em;color:var(--t-80);text-wrap:pretty}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 15px;border-radius:7px;background:var(--paper);color:#000;
+  font-family:var(--f-ui);font-weight:700;font-size:12px;letter-spacing:-.02em;line-height:1;will-change:transform;
+  transition:background-color .2s ease,box-shadow .3s ease,scale .25s var(--ease-out)}
+.btn:hover{background:var(--hot);box-shadow:0 10px 30px -10px rgba(255,236,9,.55)}
+.btn:active{scale:.96}
+.btn.dark{background:#191919;color:var(--paper)}
+.btn.dark:hover{background:#000;box-shadow:none}
+
+.dots{position:absolute;z-index:5;left:50%;bottom:28px;transform:translateX(-50%);display:flex;gap:6px}
+.dot{width:32px;height:15px;display:grid;align-items:center}
+.dot .track{display:block;height:3px;border-radius:20px;background:var(--t-30);overflow:hidden;transition:background-color .2s}
+.dot:hover .track{background:rgba(255,255,255,.5)}
+.dot .fill{display:block;height:100%;background:var(--paper);border-radius:20px;transform-origin:left;transform:scaleX(0)}
+.dot.on .fill{animation:fill var(--dur,6500ms) linear forwards}
+.dot.done .fill{transform:scaleX(1)}
+.hero.paused .dot.on .fill{animation-play-state:paused}
+@keyframes fill{to{transform:scaleX(1)}}
+.ctrls{position:absolute;z-index:5;right:calc(33px + env(safe-area-inset-right,0px));bottom:22px;display:flex;gap:12px}
+.ctrl{width:39px;height:39px;border-radius:20px;display:grid;place-items:center;color:#000;
+  background:rgba(255,255,255,.62);transition:background-color .2s,scale .25s var(--ease-out)}
+.ctrl:hover{background:rgba(255,255,255,.85)}
+.ctrl:active{scale:.9}
+.ctrl .flip{transform:scaleX(-1)}
+.ctrl .i-play{display:none}
+.hero.paused .ctrl .i-pause{display:none}
+.hero.paused .ctrl .i-play{display:block}
+
+/* ───────── TILES ───────── */
+.tiles{display:grid;grid-template-columns:1fr}
+.tile{position:relative;height:690px;overflow:hidden;display:flex;flex-direction:column;align-items:center;isolation:isolate}
+.tile-bg{position:absolute;inset:0;overflow:hidden;z-index:-1;contain:paint}
+.tile-bg picture{display:contents}
+.tile-bg img{position:absolute;left:0;top:-6%;width:100%;height:112%;max-width:none;object-fit:cover;transition:scale 1.4s var(--ease-out)}
+.tile:hover .tile-bg img{scale:1.035}
+
+.tile-copy{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding-block:70px 30px;padding-left:var(--gx);padding-right:var(--gxr)}
+.tile-copy .t-txt{display:flex;flex-direction:column;gap:8px;align-items:center}
+/* new hands asset = old framing + 231px of arm below; that extra bleeds off the tile bottom (29.06% of its height) so parallax never lifts it into view */
+.hands{position:absolute;left:50%;bottom:0;width:min(122.6%,482px);translate:-50% 29.06%;will-change:translate}
+.hands img{width:100%;height:auto;transition:transform .8s var(--ease-out)}
+.tile:hover .hands img{transform:translateY(-10px) rotate(-1.5deg)}
+
+/* ───────── FOOTER ───────── */
+.foot{background:var(--night);color:var(--paper)}
+.foot-in{padding-block:24px 40px;padding-left:var(--gx);padding-right:var(--gxr);display:flex;flex-direction:column;gap:28px;max-width:1800px;margin-inline:auto}
+.foot-mark svg{width:70px;height:63px;rotate:-4.23deg;transition:rotate .8s var(--ease-out)}
+.foot-mark:hover svg{rotate:-40deg}
+.foot-cols{display:grid;grid-template-columns:1fr;gap:0}
+.fcol{display:flex;flex-direction:column;gap:22px;padding-block:24px;border-top:1px solid #3a3a3a}
+.fcol a,.cur{font-family:var(--f-ui);font-weight:600;font-size:15px;letter-spacing:.01em;text-transform:uppercase;width:max-content;transition:color .15s}
+.fcol a:hover{color:var(--hot)}
+.cur{display:inline-flex;align-items:center;gap:10px;font-size:16px}
+.cur svg{transform:rotate(90deg)}
+.legal{font-family:var(--f-ui);font-size:12px;color:rgba(255,255,255,.5);padding-top:8px;border-top:1px solid #3a3a3a;padding-block:20px 0}
+
+/* ───────── DESKTOP ───────── */
+@media (min-width:820px){
+  .hero{height:clamp(600px,44.5vw,880px)}
+  .btn{font-size:14px;letter-spacing:-.02em}
+  .display{font-size:clamp(35px,2.4vw,46px)}
+  .lede{font-size:clamp(14px,.9vw,16px)}
+  .s-stage{padding-bottom:70px}
+  .s-pouch{height:56%}
+  .duo .s-pouch{transform-origin:50% 50%}
+  .duo .p-back{height:74cqh;top:17.5cqh;left:calc(50% - 54.8cqh);rotate:-3deg}
+  .duo .p-front{height:73.2cqh;top:18.4cqh;left:calc(50% - 6.7cqh);rotate:.24deg}
+  .slide[data-k="g2"] .s-copy,.slide[data-k="g2"] .s-btn{position:relative;z-index:3}
+  .slide[data-align="start"] .s-stage{padding-left:max(6vw,var(--gx));padding-bottom:86px}
+  .slide[data-align="start"] .s-copy{max-width:420px}
+  .tiles{grid-template-columns:1fr 1fr}
+  .tile{height:clamp(560px,38.4vw,800px)}
+  .hands{width:53.6%}
+  .foot-cols{grid-template-columns:1.2fr 1fr 1fr;gap:40px}
+  .fcol{border-top:1px solid #3a3a3a}
+  .foot-in{padding-block:40px 32px}
+}
+@media (max-width:819.98px){
+  .links,.logo-d{display:none}
+  .burger{display:block}
+  .logo-m{display:grid}
+  .bar-c{justify-self:center}
+  .ctrls{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important}
+  .dot.on .fill{animation:none;transform:scaleX(1)}
+  .tilt{translate:none!important;rotate:none!important}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 33 30"><path d="M31.2671 6.61291C31.2715 6.67278 31.2438 6.70493 31.1839 6.70935C31.1839 6.70935 31.1883 6.76922 31.1972 6.88895C30.8224 7.51861 30.37 7.91324 29.8401 8.07282C29.6649 8.14597 29.4898 8.21912 29.3146 8.29227C29.1394 8.36542 28.9665 8.46851 28.7957 8.60152C28.7403 8.66582 28.6527 8.70239 28.533 8.71125C28.4132 8.7201 28.2979 8.78883 28.187 8.91741C28.0717 8.98614 27.9287 9.08701 27.758 9.22003C27.6471 9.34862 27.5063 9.47942 27.3355 9.61244C26.5284 10.0935 25.8964 10.5014 25.4396 10.8362C25.0427 11.1665 24.5626 11.5933 23.9994 12.1165C23.598 12.3869 23.445 12.7594 23.5403 13.2339C23.6356 13.7084 23.8717 14.0521 24.2486 14.265C25.366 14.7241 26.4857 15.2131 27.6076 15.7321C28.7849 16.1868 29.9622 16.6414 31.1395 17.0961C31.7603 17.3512 32.0973 17.8379 32.1504 18.5563C32.1171 18.9199 31.9597 19.2325 31.6781 19.4941C31.3964 19.7557 31.0738 19.8699 30.7102 19.8366C29.2513 19.6435 27.7003 19.4272 26.0573 19.1875C24.4099 18.888 22.696 18.5031 20.9156 18.0329C20.4234 17.8887 19.9467 17.9541 19.4855 18.229C19.0243 18.5039 18.7515 18.8852 18.6672 19.373C18.5251 20.7078 18.3343 22.1966 18.0947 23.8396C17.9149 25.4781 17.7917 26.661 17.7251 27.3883C17.7295 27.4481 17.6741 27.5124 17.5588 27.5812C17.4435 27.6499 17.3493 27.5967 17.2761 27.4215C17.2628 27.2419 17.173 27.2485 17.0067 27.4414C16.7206 27.6431 16.5333 27.958 16.4445 28.3859C16.2361 28.8227 15.9566 29.1142 15.6063 29.2605C15.2515 29.3469 14.9522 29.3691 14.7083 29.3269C14.4556 29.165 14.1795 29.0952 13.8802 29.1173C13.5809 29.1395 13.3325 29.0374 13.1352 28.8113C13.0665 28.6959 12.9379 28.5851 12.7494 28.4786C12.6208 28.3677 12.4945 28.2868 12.3703 28.2358C11.9247 27.9076 11.621 27.0572 11.4593 25.6847C11.2932 24.2524 11.1957 22.9353 11.1671 21.7335C11.1915 21.2502 11.0175 20.932 10.645 20.779C10.2681 20.5661 9.9366 20.5605 9.65056 20.7622C8.60838 21.3209 7.47198 21.8263 6.24135 22.2784C5.06616 22.6663 3.93534 22.8403 2.84889 22.8002C1.8223 22.7558 1.00861 22.3344 0.407821 21.5361C0.0730653 21.0793 -0.0565809 20.5472 0.018872 19.9397C0.154192 19.3277 0.482391 18.8821 1.00348 18.6028C2.04122 17.9843 3.0191 17.3702 3.93711 16.7605C4.91056 16.0866 5.9461 15.4382 7.04371 14.8152C7.39406 14.6689 7.55372 14.3863 7.52272 13.9672C7.49173 13.5481 7.29221 13.292 6.92416 13.1988C5.80228 12.6799 4.73806 12.1266 3.73149 11.5389C2.78035 10.8869 2.05761 10.0675 1.56327 9.0808C1.28395 8.55972 1.30839 8.07636 1.63659 7.63072C1.96037 7.12522 2.36615 6.91463 2.85394 6.99894C4.18429 7.08112 5.28403 7.30075 6.15316 7.65782C7.07773 7.9506 8.12645 8.29439 9.29934 8.68919C9.79156 8.83337 10.2383 8.77023 10.6397 8.49976C11.041 8.2293 11.2561 7.88232 11.285 7.45883C11.3295 6.43224 11.3695 5.34579 11.4051 4.19947C11.4407 3.05315 11.4796 2.35805 11.5218 2.11415C11.5173 2.05429 11.5129 1.99442 11.5085 1.93455C11.5595 1.81039 11.5828 1.71838 11.5783 1.65851C11.7092 0.986694 12.0651 0.508914 12.6461 0.225172C13.227 -0.0585748 13.8279 -0.0729242 14.4487 0.182128C14.5086 0.1777 14.5407 0.205421 14.5452 0.265287C14.5452 0.265287 14.5751 0.263072 14.635 0.258644C15.8079 0.653446 16.6758 1.40187 17.2389 2.50391C17.9261 3.65695 18.4038 4.8255 18.672 6.00955C18.8271 6.47963 19.1231 6.8189 19.5599 7.02737C20.0565 7.23141 20.5122 7.288 20.9268 7.19714C21.6275 6.90454 22.2428 6.67844 22.7727 6.51886C23.2983 6.29941 23.8682 5.866 24.4824 5.21862C24.5977 5.1499 24.7152 5.11111 24.835 5.10225L24.9314 5.18542C25.1198 5.29186 25.2695 5.28079 25.3804 5.15221C25.713 4.76644 26.1122 4.46604 26.5778 4.25102C27.0435 4.03599 27.5091 3.82097 27.9748 3.60594C29.0856 3.16262 30.1233 3.35674 31.0877 4.18832C31.4691 4.46108 31.6797 4.86686 31.7195 5.40566C31.7549 5.88459 31.6041 6.28701 31.2671 6.61291Z"/></symbol>
+  <symbol id="globe" viewBox="0 0 23 23"><path d="M11.2041 21.3232C10.4378 21.3232 9.7181 21.069 9.04492 20.5605C8.37891 20.0521 7.79167 19.3431 7.2832 18.4336C6.7819 17.5169 6.38444 16.4463 6.09082 15.2217C5.80436 13.9899 5.66113 12.6579 5.66113 11.2256C5.66113 9.79329 5.80436 8.46126 6.09082 7.22949C6.38444 5.99772 6.7819 4.9235 7.2832 4.00684C7.78451 3.08301 8.37175 2.36686 9.04492 1.8584C9.7181 1.34993 10.4378 1.0957 11.2041 1.0957C11.9704 1.0957 12.6865 1.34993 13.3525 1.8584C14.0257 2.36686 14.6165 3.08301 15.125 4.00684C15.6335 4.9235 16.0309 5.99772 16.3174 7.22949C16.6038 8.46126 16.7471 9.79329 16.7471 11.2256C16.7471 12.6579 16.6003 13.9899 16.3066 15.2217C16.0202 16.4463 15.6227 17.5169 15.1143 18.4336C14.6058 19.3431 14.0186 20.0521 13.3525 20.5605C12.6865 21.069 11.9704 21.3232 11.2041 21.3232ZM11.2041 2.56738C10.6956 2.56738 10.2051 2.80013 9.73242 3.26562C9.25977 3.73112 8.83724 4.36849 8.46484 5.17773C8.09245 5.98698 7.79883 6.91081 7.58398 7.94922C7.36914 8.98763 7.26172 10.0798 7.26172 11.2256C7.26172 12.3643 7.36914 13.4492 7.58398 14.4805C7.79883 15.5117 8.09245 16.432 8.46484 17.2412C8.83724 18.0433 9.25977 18.6771 9.73242 19.1426C10.2051 19.6152 10.6956 19.8516 11.2041 19.8516C11.7126 19.8516 12.2031 19.6152 12.6758 19.1426C13.1484 18.6771 13.571 18.0433 13.9434 17.2412C14.3158 16.432 14.6094 15.5117 14.8242 14.4805C15.0391 13.4492 15.1465 12.3643 15.1465 11.2256C15.1465 10.0798 15.0391 8.98763 14.8242 7.94922C14.6094 6.91081 14.3158 5.98698 13.9434 5.17773C13.571 4.36849 13.1484 3.73112 12.6758 3.26562C12.2031 2.80013 11.7126 2.56738 11.2041 2.56738ZM10.4199 1.24609H11.9883V21.1299H10.4199V1.24609ZM11.2041 14.7705C12.3356 14.7705 13.4098 14.8636 14.4268 15.0498C15.4437 15.2288 16.3532 15.4867 17.1553 15.8232C17.9574 16.1598 18.6019 16.5537 19.0889 17.0049L17.8857 18.0039C17.4346 17.653 16.8724 17.3558 16.1992 17.1123C15.526 16.8617 14.7669 16.6719 13.9219 16.543C13.0768 16.4141 12.1709 16.3496 11.2041 16.3496C10.2373 16.3496 9.33138 16.4141 8.48633 16.543C7.64128 16.6719 6.88216 16.8617 6.20898 17.1123C5.53581 17.3558 4.97005 17.653 4.51172 18.0039L3.30859 17.0049C3.80273 16.5537 4.45085 16.1598 5.25293 15.8232C6.05501 15.4867 6.96452 15.2288 7.98145 15.0498C8.99837 14.8636 10.0726 14.7705 11.2041 14.7705ZM21.001 10.4092V11.9883H1.40723V10.4092H21.001ZM11.2041 7.69141C10.0726 7.69141 8.99837 7.60189 7.98145 7.42285C6.96452 7.23665 6.05501 6.97526 5.25293 6.63867C4.45085 6.30208 3.80273 5.9082 3.30859 5.45703L4.51172 4.45801C4.97005 4.80892 5.53581 5.1097 6.20898 5.36035C6.88216 5.60384 7.64128 5.79004 8.48633 5.91895C9.33138 6.04785 10.2373 6.1123 11.2041 6.1123C12.1709 6.1123 13.0768 6.04785 13.9219 5.91895C14.7669 5.79004 15.526 5.60384 16.1992 5.36035C16.8724 5.1097 17.4346 4.80892 17.8857 4.45801L19.0889 5.45703C18.6019 5.9082 17.9574 6.30208 17.1553 6.63867C16.3532 6.97526 15.4437 7.23665 14.4268 7.42285C13.4098 7.60189 12.3356 7.69141 11.2041 7.69141ZM11.2041 22.4082C9.65723 22.4082 8.20703 22.1146 6.85352 21.5273C5.5 20.9473 4.30762 20.1452 3.27637 19.1211C2.25228 18.097 1.4502 16.9082 0.870117 15.5547C0.290039 14.2012 0 12.751 0 11.2041C0 9.65723 0.290039 8.20703 0.870117 6.85352C1.4502 5.5 2.25228 4.3112 3.27637 3.28711C4.30762 2.25586 5.5 1.4502 6.85352 0.870117C8.20703 0.290039 9.65723 0 11.2041 0C12.751 0 14.2012 0.290039 15.5547 0.870117C16.9082 1.4502 18.097 2.25586 19.1211 3.28711C20.1452 4.3112 20.9473 5.5 21.5273 6.85352C22.1146 8.20703 22.4082 9.65723 22.4082 11.2041C22.4082 12.751 22.1146 14.2012 21.5273 15.5547C20.9473 16.9082 20.1452 18.097 19.1211 19.1211C18.097 20.1452 16.9082 20.9473 15.5547 21.5273C14.2012 22.1146 12.751 22.4082 11.2041 22.4082ZM11.2041 20.4854C12.486 20.4854 13.6855 20.2454 14.8027 19.7656C15.9271 19.2858 16.9154 18.6198 17.7676 17.7676C18.6198 16.9154 19.2858 15.9307 19.7656 14.8135C20.2454 13.6891 20.4854 12.486 20.4854 11.2041C20.4854 9.9222 20.2454 8.71908 19.7656 7.59473C19.2858 6.47038 18.6198 5.48568 17.7676 4.64062C16.9154 3.78841 15.9271 3.1224 14.8027 2.64258C13.6855 2.16276 12.486 1.92285 11.2041 1.92285C9.9222 1.92285 8.71908 2.16276 7.59473 2.64258C6.47754 3.1224 5.49284 3.78841 4.64062 4.64062C3.78841 5.48568 3.1224 6.47038 2.64258 7.59473C2.16276 8.71908 1.92285 9.9222 1.92285 11.2041C1.92285 12.486 2.16276 13.6891 2.64258 14.8135C3.1224 15.9307 3.78841 16.9154 4.64062 17.7676C5.49284 18.6198 6.47754 19.2858 7.59473 19.7656C8.71908 20.2454 9.9222 20.4854 11.2041 20.4854Z"/></symbol>
+  <symbol id="cart" viewBox="0 0 26 22"><path d="M8.80859 16.1133C7.95638 16.1133 7.30111 15.8734 6.84277 15.3936C6.38444 14.9137 6.09082 14.2549 5.96191 13.417L4.33984 2.32031H1.13867C0.830729 2.32031 0.562174 2.20573 0.333008 1.97656C0.111003 1.7474 0 1.47526 0 1.16016C0 0.845052 0.111003 0.572917 0.333008 0.34375C0.562174 0.114583 0.830729 0 1.13867 0H4.75879C5.389 0 5.83301 0.125326 6.09082 0.375977C6.35579 0.626628 6.52051 1.0026 6.58496 1.50391L8.28223 13.1914C8.31087 13.4421 8.39681 13.6426 8.54004 13.793C8.68327 13.9362 8.86589 14.0078 9.08789 14.0078H21.291C21.5703 14.0078 21.8174 14.1045 22.0322 14.2979C22.2471 14.4912 22.3545 14.7419 22.3545 15.0498C22.3545 15.3721 22.2471 15.6299 22.0322 15.8232C21.8174 16.0166 21.5703 16.1133 21.291 16.1133H8.80859ZM6.99316 12.0957L6.98242 9.99023H21.1621C21.3913 9.99023 21.5703 9.91862 21.6992 9.77539C21.8353 9.63216 21.9212 9.43522 21.957 9.18457L22.5908 4.66211H6.02637L6.01562 2.5459H23.7725C24.1878 2.5459 24.5101 2.6569 24.7393 2.87891C24.9684 3.09375 25.083 3.37305 25.083 3.7168C25.083 3.78841 25.0758 3.86719 25.0615 3.95312C25.0544 4.0319 25.0436 4.11068 25.0293 4.18945L24.2559 9.37793C24.1341 10.2301 23.8405 10.8962 23.375 11.376C22.9167 11.8558 22.2614 12.0957 21.4092 12.0957H6.99316ZM9.7002 21.5918C9.33496 21.5918 9.00553 21.5059 8.71191 21.334C8.41829 21.1621 8.18197 20.9258 8.00293 20.625C7.82389 20.3314 7.73438 20.002 7.73438 19.6367C7.73438 19.2786 7.82389 18.9492 8.00293 18.6484C8.18197 18.3548 8.41829 18.1221 8.71191 17.9502C9.00553 17.7783 9.33496 17.6924 9.7002 17.6924C10.2373 17.6924 10.6956 17.8822 11.0752 18.2617C11.4619 18.6413 11.6553 19.0996 11.6553 19.6367C11.6553 20.1882 11.4619 20.6501 11.0752 21.0225C10.6956 21.402 10.2373 21.5918 9.7002 21.5918ZM19.5508 21.5918C19.0137 21.5918 18.5518 21.402 18.165 21.0225C17.7855 20.6501 17.5957 20.1882 17.5957 19.6367C17.5957 19.2786 17.6816 18.9492 17.8535 18.6484C18.0326 18.3548 18.2689 18.1221 18.5625 17.9502C18.8633 17.7783 19.1927 17.6924 19.5508 17.6924C20.0951 17.6924 20.557 17.8822 20.9365 18.2617C21.3161 18.6413 21.5059 19.0996 21.5059 19.6367C21.5059 20.1882 21.3161 20.6501 20.9365 21.0225C20.557 21.402 20.0951 21.5918 19.5508 21.5918Z"/></symbol>
+  <symbol id="chev" viewBox="0 0 8 14"><path d="M7.64062 6.78125C7.64062 6.88021 7.61979 6.97396 7.57812 7.0625C7.54167 7.14583 7.48698 7.22396 7.41406 7.29688L1.22656 13.3516C1.08594 13.4922 0.914062 13.5625 0.710938 13.5625C0.580729 13.5625 0.460938 13.5312 0.351562 13.4688C0.242188 13.4062 0.15625 13.3203 0.09375 13.2109C0.03125 13.1068 0 12.987 0 12.8516C0 12.6589 0.0677083 12.4896 0.203125 12.3438L5.89062 6.78125L0.203125 1.21875C0.0677083 1.07292 0 0.903646 0 0.710938C0 0.575521 0.03125 0.455729 0.09375 0.351562C0.15625 0.242188 0.242188 0.15625 0.351562 0.09375C0.460938 0.03125 0.580729 0 0.710938 0C0.914062 0 1.08594 0.0677083 1.22656 0.203125L7.41406 6.26562C7.48698 6.33854 7.54167 6.41927 7.57812 6.50781C7.61979 6.59115 7.64062 6.68229 7.64062 6.78125Z"/></symbol>
+</svg>
+
+<header class="nav" id="nav">
+  <div class="bar-bg" aria-hidden="true"></div>
+  <div class="surface" aria-hidden="true"><div class="surf-bar"></div><div class="surf-sheet" id="sheet"></div></div>
+  <div class="bar" id="bar">
+    <div class="bar-l">
+      <button class="icon-btn burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="mnav"><span></span><span></span><span></span></button>
+      <a href="#top" class="logo logo-d" aria-label="PREF*RE home" data-intro="nav"><svg class="ico"><use href="#mark"/></svg></a>
+    </div>
+    <div class="bar-c">
+      <nav class="links" aria-label="Primary">
+        <button class="pill" data-menu="m-heat" aria-expanded="false" aria-controls="m-heat" data-intro="nav">HEAT</button>
+        <a class="pill" href="#shop" data-close data-intro="nav">SHOP</a>
+        <a class="pill" href="#about" data-close data-intro="nav">ABOUT</a>
+      </nav>
+      <a href="#top" class="logo logo-m" aria-label="PREF*RE home"><svg class="ico" style="width:36px;height:33px"><use href="#mark"/></svg></a>
+    </div>
+    <div class="bar-r">
+      <button class="icon-btn" data-menu="m-region" aria-expanded="false" aria-controls="m-region" aria-label="Region" data-intro="nav"><svg class="ico" width="22" height="22"><use href="#globe"/></svg></button>
+      <a class="icon-btn" href="#cart" aria-label="Cart" data-close data-intro="nav"><svg class="ico" width="25" height="21"><use href="#cart"/></svg></a>
+    </div>
+  </div>
+
+  <div class="panel" id="m-heat" aria-label="Heat">
+    <div class="panel-in heat">
+      <div class="prods">
+        <div class="prod stg" style="--i:0">
+          <a class="prod-img" href="#ultra"><img src="img/ultra-sm.webp" alt="PREF*RE Ultra pouch" width="131" height="151"></a>
+          <div class="prod-meta"><span class="prod-name">ULTRA</span><span class="prod-ll"><a href="#ultra">Learn</a><a href="#buy-ultra">Buy</a></span></div>
+        </div>
+        <div class="prod solo stg" style="--i:1">
+          <a class="prod-img" href="#solo"><img src="img/solo-sm.webp" alt="PREF*RE Solo pouch" width="93" height="120"></a>
+          <div class="prod-meta"><span class="prod-name">SOLO</span><span class="prod-ll"><a href="#solo">Learn</a><a href="#buy-solo">Buy</a></span></div>
+        </div>
+      </div>
+      <span class="vr stg" style="--i:2" aria-hidden="true"></span>
+      <div class="list">
+        <p class="lab stg" style="--i:2">Use for</p>
+        <ul>
+          <li class="stg" style="--i:3"><a href="#esports">eSports</a></li>
+          <li class="stg" style="--i:4"><a href="#climbing">Climbing</a></li>
+          <li class="stg" style="--i:5"><a href="#speed-cubing">Speed Cubing</a></li>
+          <li class="stg" style="--i:6"><a href="#hunting">Hunting</a></li>
+          <li class="stg" style="--i:7"><a href="#football">Football</a></li>
+          <li class="stg" style="--i:8"><a href="#dog-walking">Dog Walking</a></li>
+          <li class="stg" style="--i:9"><a href="#disc-golf">Disc Golf</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="m-region" aria-label="Region">
+    <div class="panel-in">
+      <div class="list" style="min-width:78px">
+        <p class="lab stg" style="--i:0">Region</p>
+        <ul id="regions">
+          <li class="stg" style="--i:1"><a href="#americas" aria-current="true">Americas</a></li>
+          <li class="stg" style="--i:2"><a href="#europe">Europe</a></li>
+          <li class="stg" style="--i:3"><a href="#middle-east">Middle East</a></li>
+          <li class="stg" style="--i:4"><a href="#pacific">Pacific</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mnav" id="mnav" aria-label="Menu">
+  <div class="mnav-in">
+    <div class="mgroup">
+      <span class="mlab mi" style="--i:0">SHOP</span>
+      <a class="big mi" style="--i:1" href="#solo" data-close>SOLO</a>
+      <a class="big mi" style="--i:2" href="#ultra" data-close>ULTRA</a>
+      <a class="big mi" style="--i:3" href="#all" data-close>ALL</a>
+    </div>
+    <div class="mgroup">
+      <span class="mlab mi" style="--i:4">ABOUT</span>
+      <a class="big mi" style="--i:5" href="#company" data-close>COMPANY</a>
+      <a class="big mi" style="--i:6" href="#indoors" data-close>INDOORS</a>
+      <a class="big mi" style="--i:7" href="#outdoors" data-close>OUTDOORS</a>
+      <a class="big mi" style="--i:8" href="#guides" data-close>GUIDES</a>
+    </div>
+    <div class="mgroup">
+      <a class="big mi" style="--i:9" href="#faq" data-close>FAQ</a>
+      <a class="big mi" style="--i:10" href="#contact" data-close>CONTACT</a>
+    </div>
+  </div>
+</div>
+
+<main id="top">
+  <section class="hero" id="hero" aria-roledescription="carousel" aria-label="Featured" tabindex="-1">
+    <article class="slide is-active" data-k="ultra" aria-roledescription="slide" aria-label="1 of 3">
+      <div class="s-bg"><picture><source media="(min-width:820px)" srcset="img/hero-ultra-d.webp" width="1800" height="800"><img src="img/hero-ultra-m.webp" width="900" height="1579" alt="" decoding="async" fetchpriority="high" data-intro="bg"></picture></div>
+      <div class="s-stage">
+        <div class="s-pouch" data-intro="pouch"><div class="tilt"><img src="img/ultra-pouch.webp" alt="PREF*RE Ultra instant heat pouch, 12+ hours" width="814" height="898"></div></div>
+        <div class="s-copy" data-intro="copy">
+          <p class="eyebrow">ULTRA</p>
+          <h1 class="display">! WARNING HOT AF !</h1>
+          <p class="lede">After the world’s comfiest instant heat pouch,<br>we decided to make the hottest.</p>
+        </div>
+        <a class="btn s-btn" href="#ultra" data-intro="btn">Explore Ultra</a>
+      </div>
+    </article>
+
+    <article class="slide" data-k="long" data-align="start" aria-roledescription="slide" aria-label="2 of 3">
+      <div class="s-bg"><picture><source media="(min-width:820px)" srcset="img/hero-long-d.webp" width="1800" height="800"><img src="img/hero-long-m.webp" width="900" height="1579" alt="" decoding="async"></picture></div>
+      <div class="s-stage">
+        <div class="s-copy"><div class="s-txt">
+          <h2 class="display">THE LONG WAY</h2>
+          <p class="lede">Hiking the Pacific Northwest in off-season to capture a once in a lifetime moment.</p>
+        </div></div>
+        <a class="btn s-btn" href="#story">READ STORY</a>
+      </div>
+    </article>
+
+    <article class="slide" data-k="g2" data-align="start" aria-roledescription="slide" aria-label="3 of 3">
+      <div class="s-bg"><picture><source media="(min-width:820px)" srcset="img/hero-g2-d.webp" width="1800" height="800"><img src="img/hero-g2-m.webp" width="900" height="1579" alt="" decoding="async"></picture></div>
+      <div class="s-stage">
+        <div class="duo">
+          <div class="s-pouch p-back" style="--d:.55"><div class="tilt"><img src="img/g2-black.webp" alt="G2 x PREF*RE Solo pouch, black edition" width="1113" height="1000" loading="lazy"></div></div>
+          <div class="s-pouch p-front" style="--d:1.25"><div class="tilt"><img src="img/g2-yellow.webp" alt="G2 x PREF*RE Solo pouch, yellow edition" width="1035" height="1000" loading="lazy"></div></div>
+        </div>
+        <div class="s-copy">
+          <p class="eyebrow">LIMITED EDITION</p>
+          <div class="s-txt">
+            <h2 class="display">G2 x PREF*RE</h2>
+            <p class="lede">Limited packs, merch and prizes. Sign up and Lock in for the drop.</p>
+          </div>
+        </div>
+        <a class="btn s-btn" href="#collab">SHOP COLLAB</a>
+      </div>
+    </article>
+
+    <div class="dots" role="group" aria-label="Choose slide" data-intro="dots">
+      <button class="dot on" aria-label="Slide 1" aria-current="true"><span class="track"><span class="fill"></span></span></button>
+      <button class="dot" aria-label="Slide 2"><span class="track"><span class="fill"></span></span></button>
+      <button class="dot" aria-label="Slide 3"><span class="track"><span class="fill"></span></span></button>
+    </div>
+    <div class="ctrls" data-intro="dots">
+      <button class="ctrl" id="pause" aria-label="Pause slideshow"><svg class="ico i-pause" width="12" height="13" viewBox="0 0 12 13"><rect x="1" y="0" width="3.4" height="13" rx="1.2"/><rect x="7.6" y="0" width="3.4" height="13" rx="1.2"/></svg><svg class="ico i-play" width="12" height="13" viewBox="0 0 12 13"><path d="M2 1.2v10.6c0 .8.9 1.3 1.6.9l8-5.3c.6-.4.6-1.3 0-1.7l-8-5.3C2.9-.1 2 .4 2 1.2z"/></svg></button>
+      <button class="ctrl" id="prev" aria-label="Previous slide"><svg class="ico flip" width="8" height="14"><use href="#chev"/></svg></button>
+      <button class="ctrl" id="next" aria-label="Next slide"><svg class="ico" width="8" height="14"><use href="#chev"/></svg></button>
+    </div>
+    <p class="sr" aria-live="polite" id="live"></p>
+  </section>
+
+  <section class="tiles" aria-label="Where it works">
+    <article class="tile out">
+      <div class="tile-bg"><picture><source media="(min-width:820px)" srcset="img/tile-out-d.webp"><img src="img/tile-out-m.webp" alt="Climber on a mossy boulder in a forest" loading="lazy" decoding="async" data-par="0.08"></picture></div>
+      <div class="tile-copy">
+        <p class="eyebrow">OUTDOOR</p>
+        <div class="t-txt">
+          <h2 class="display">PUSH YOUR LIMIT</h2>
+          <p class="lede">Get heated, recover faster, double your routes.</p>
+        </div>
+        <a class="btn" href="#climbing">Explore Climbing</a>
+      </div>
+      <div class="hands" data-par="-0.12"><img src="img/hands-solo.webp" alt="Hands holding a PREF*RE Solo pouch" width="964" height="795" loading="lazy"></div>
+    </article>
+    <article class="tile in">
+      <div class="tile-bg"><picture><source media="(min-width:820px)" srcset="img/tile-in-d.webp"><img src="img/tile-in-m.webp" alt="Hand on a mouse beside an opened PREF*RE pouch at a gaming desk" loading="lazy" decoding="async" data-par="0.08"></picture></div>
+      <div class="tile-copy">
+        <p class="eyebrow">INDOOR</p>
+        <div class="t-txt">
+          <h2 class="display">Founded in eSports</h2>
+          <p class="lede">Trusted on the biggest stages in gaming.</p>
+        </div>
+        <a class="btn" href="#gaming">Explore Gaming</a>
+      </div>
+    </article>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <a href="#top" class="foot-mark" aria-label="Back to top"><svg class="ico"><use href="#mark"/></svg></a>
+    <div class="foot-cols">
+      <div class="fcol"><span class="cur">$ United States (USD) <svg class="ico" width="7" height="12"><use href="#chev"/></svg></span></div>
+      <div class="fcol"><a href="#instagram">Instagram</a><a href="#x" style="font-style:italic;font-weight:800">X</a><a href="#tiktok">TikTok</a></div>
+      <div class="fcol"><a href="#sponsorships">Sponsorships</a><a href="#privacy">Privacy Policy</a><a href="#terms">Terms &amp; Conditions</a></div>
+    </div>
+    <p class="legal">2026 © Prefire Products Inc. All Rights Reserved</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const RM = matchMedia('(prefers-reduced-motion: reduce)');
+  const DESK = matchMedia('(min-width: 820px)');
+  const FINE = matchMedia('(hover: hover) and (pointer: fine)');
+  const nav = $('#nav'), bar = $('#bar'), root = document.documentElement;
+
+  /* prototype: keep every link on this page */
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute('href') !== '#top') e.preventDefault();
+  });
+
+  /* ── bar height + scrolled state ── */
+  const setBarH = () => root.style.setProperty('--bar-h', bar.offsetHeight + 'px');
+  setBarH();
+  const onScroll = () => nav.classList.toggle('scrolled', scrollY > 20);
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  /* ── dropdowns ── */
+  let openId = null, openT, closeT, openedAt = 0;
+  const trig = id => $(`[data-menu="${id}"]`);
+  function place(p, t) {
+    const r = t.getBoundingClientRect(), w = p.offsetWidth, vw = root.clientWidth;
+    let x = r.left + r.width / 2 - w / 2;
+    x = Math.max(12, Math.min(vw - w - 12, x));
+    p.style.left = x + 'px';
+  }
+  const sheet = $('#sheet');
+  function fitSheet(p, snap) {
+    if (snap) sheet.classList.add('snap');
+    sheet.style.left = p.style.left;
+    sheet.style.width = p.offsetWidth + 'px';
+    sheet.style.height = p.offsetHeight + 'px';
+    if (snap) { void sheet.offsetWidth; sheet.classList.remove('snap'); }
+  }
+  function openMenu(id) {
+    clearTimeout(closeT); clearTimeout(openT);
+    if (openId === id) return;
+    /* fresh open: sheet snaps to size while invisible. switching: sheet morphs to the new panel */
+    const fresh = !openId || !nav.classList.contains('menu-open');
+    if (openId) shut(openId);
+    if (nav.classList.contains('m-open')) toggleM(false);
+    const p = $('#' + id), t = trig(id);
+    place(p, t);
+    fitSheet(p, fresh);
+    p.classList.add('is-open'); t.setAttribute('aria-expanded', 'true');
+    nav.classList.add('menu-open'); openId = id; openedAt = performance.now();
+  }
+  function shut(id) { $('#' + id).classList.remove('is-open'); trig(id).setAttribute('aria-expanded', 'false'); }
+  function closeMenu() {
+    clearTimeout(openT);
+    if (!openId) return;
+    shut(openId); openId = null; nav.classList.remove('menu-open');
+  }
+  $$('[data-menu]').forEach(t => {
+    const id = t.dataset.menu;
+    t.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && DESK.matches) { clearTimeout(closeT); openT = setTimeout(() => openMenu(id), openId ? 0 : 70); } });
+    t.addEventListener('click', () => {
+      if (openId === id) { if (performance.now() - openedAt > 450) closeMenu(); }
+      else openMenu(id);
+    });
+  });
+  $$('.bar [data-close]').forEach(a => a.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { clearTimeout(openT); closeT = setTimeout(closeMenu, 120); } }));
+  nav.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { clearTimeout(openT); closeT = setTimeout(closeMenu, 220); } });
+  nav.addEventListener('pointerenter', () => clearTimeout(closeT));
+  document.addEventListener('pointerdown', e => { if (openId && !e.target.closest('.nav')) closeMenu(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (openId) { const t = trig(openId); closeMenu(); t.focus(); }
+    if (nav.classList.contains('m-open')) { toggleM(false); $('#burger').focus(); }
+  });
+  $$('.panel a').forEach(a => a.addEventListener('click', closeMenu));
+  $$('#regions a').forEach(a => a.addEventListener('click', () => {
+    $$('#regions a').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'true');
+  }));
+  addEventListener('resize', () => {
+    setBarH();
+    if (openId) { const p = $('#' + openId); place(p, trig(openId)); fitSheet(p, true); }
+    if (DESK.matches && nav.classList.contains('m-open')) toggleM(false);
+  });
+
+  /* ── mobile menu ── */
+  const burger = $('#burger');
+  function toggleM(force) {
+    const on = force ?? !nav.classList.contains('m-open');
+    if (on) closeMenu();
+    nav.classList.toggle('m-open', on);
+    burger.setAttribute('aria-expanded', String(on));
+    document.body.classList.toggle('locked', on);
+  }
+  burger.addEventListener('click', () => toggleM());
+  $$('.mnav [data-close]').forEach(a => a.addEventListener('click', () => toggleM(false)));
+
+  /* ── hero slider ── */
+  const hero = $('#hero'), slides = $$('.slide', hero), dots = $$('.dot', hero), live = $('#live');
+  const N = slides.length;
+  let cur = 0, busy = false, pending = null, tiltTo = null;
+  /* cheap dimmer per slide (animating filter on a full-bleed photo repaints every frame and stutters) */
+  slides.forEach(s => { const d = document.createElement('div'); d.className = 's-dim'; $('.s-bg', s).appendChild(d); });
+  const L = s => ({ bg: $('.s-bg', s), img: $('.s-bg img', s), dim: $('.s-dim', s), pouches: $$('.s-pouch', s), copy: $('.s-copy', s), btn: $('.s-btn', s) });
+  /* decode every slide image up front so nothing pops in mid-transition */
+  const decoded = new WeakMap();
+  const prep = s => {
+    if (!decoded.has(s)) decoded.set(s, Promise.all($$('img', s).map(im => { im.loading = 'eager'; return im.decode ? im.decode().catch(() => {}) : Promise.resolve(); })));
+    return decoded.get(s);
+  };
+
+  function setDot(i) {
+    dots.forEach((d, k) => { d.classList.remove('on'); d.removeAttribute('aria-current'); });
+    void dots[i].offsetWidth; /* restart fill */
+    dots[i].classList.add('on'); dots[i].setAttribute('aria-current', 'true');
+  }
+
+  function go(i, dir) {
+    i = (i + N) % N;
+    if (i === cur) return;
+    if (busy) { pending = { to: i }; return; }
+    busy = true;
+    const ready = Promise.race([prep(slides[i]), new Promise(r => setTimeout(r, 450))]);
+    ready.then(() => run_(i, dir));
+  }
+  function run_(i, dir) {
+    const A = slides[cur], B = slides[i], a = L(A), b = L(B);
+    /* incoming pouches start untilted (snap, they're off-screen); outgoing ones ease back to neutral as they leave */
+    $$('.tilt', B).forEach(t => { t.style.transition = 'none'; t.style.translate = ''; t.style.rotate = ''; void t.offsetWidth; t.style.transition = ''; });
+    $$('.tilt', A).forEach(t => { t.style.translate = ''; t.style.rotate = ''; });
+    B.classList.add('is-in'); A.classList.add('is-out');
+    setDot(i);
+    live.textContent = B.getAttribute('aria-label') + ': ' + $('.display', B).textContent;
+    const run = [];
+    const an = (el, k, o) => { if (el) run.push(el.animate(k, o)); };
+    const X = v => `translate3d(${v},0,0)`;
+
+    if (RM.matches) {
+      an(B, [{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: 'ease' });
+    } else {
+      const IO = 'cubic-bezier(.76,0,.2,1)', OUT = 'cubic-bezier(.16,1,.3,1)', IN = 'cubic-bezier(.55,0,.8,.2)';
+      const D = 1100;
+      /* background: new photo wipes in from the pressed side while its image counter-drifts; old one is pushed slower and dims */
+      an(b.bg, [{ transform: X(dir * 100 + '%') }, { transform: X(0) }], { duration: D, easing: IO });
+      an(b.img, [{ transform: X(-dir * 45 + '%') }, { transform: X(0) }], { duration: D, easing: IO });
+      an(a.bg, [{ transform: X(0) }, { transform: X(-dir * 32 + '%') }], { duration: D, easing: IO, fill: 'forwards' });
+      an(a.dim, [{ opacity: 0 }, { opacity: .65 }], { duration: D, easing: IO, fill: 'forwards' });
+      /* product: fastest, most distant layer */
+      /* with two pouches, the back one leaves first and arrives first; the front one travels further */
+      /* outgoing product starts moving on frame one and is gone (faded) before the incoming one reaches the middle, so they never cross */
+      a.pouches.forEach((el, k) => an(el, [
+        { transform: 'none', opacity: 1 },
+        { opacity: 0, offset: .5 },
+        { transform: X(-dir * (45 + k * 15) + 'vw') + ` rotate(${-dir * (12 + k * 5)}deg)`, opacity: 0 }
+      ], { duration: 520, easing: 'cubic-bezier(.3,0,.7,.4)', fill: 'forwards' }));
+      b.pouches.forEach((el, k) => an(el, [{ transform: X(dir * (70 + k * 30) + 'vw') + ` rotate(${dir * (20 + k * 8)}deg)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 1250 + k * 120, delay: 360 + k * 110, easing: OUT, fill: 'backwards' }));
+      /* text and button travel separately: text first and shorter, button later and further */
+      an(a.copy, [{ transform: 'none', opacity: 1 }, { transform: X(-dir * 110 + 'px'), opacity: 0 }], { duration: 360, easing: IN, fill: 'forwards' });
+      an(a.btn, [{ transform: 'none', opacity: 1 }, { transform: X(-dir * 220 + 'px'), opacity: 0 }], { duration: 460, delay: 40, easing: IN, fill: 'forwards' });
+      an(b.copy, [{ transform: X(dir * 160 + 'px'), opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 950, delay: 540, easing: OUT, fill: 'backwards' });
+      an(b.btn, [{ transform: X(dir * 340 + 'px'), opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 1100, delay: 660, easing: OUT, fill: 'backwards' });
+    }
+    Promise.all(run.map(x => x.finished)).catch(() => {}).then(() => {
+      A.classList.remove('is-active', 'is-out');
+      B.classList.remove('is-in'); B.classList.add('is-active');
+      run.forEach(x => x.cancel());
+      cur = i; busy = false;
+      if (FINE.matches && typeof tiltTo === 'function') tiltTo();
+      if (pending) {
+        const q = pending; pending = null;
+        /* queued presses are resolved against the slide we just landed on, so back-back really goes back twice */
+        if (q.step) go(cur + q.step, q.step);
+        else if (q.to !== cur) go(q.to, q.to > cur ? 1 : -1);
+      }
+    });
+  }
+  const next = () => busy ? (pending = { step: 1 }) : go(cur + 1, 1);
+  const prev = () => busy ? (pending = { step: -1 }) : go(cur - 1, -1);
+  $('#next').addEventListener('click', next);
+  $('#prev').addEventListener('click', prev);
+  dots.forEach((d, k) => d.addEventListener('click', () => busy ? (pending = { to: k }) : go(k, k > cur ? 1 : -1)));
+  dots.forEach(d => $('.fill', d).addEventListener('animationend', () => { if (d.classList.contains('on')) next(); }));
+
+  const pauseBtn = $('#pause');
+  const setPaused = p => { hero.classList.toggle('paused', p); pauseBtn.setAttribute('aria-label', p ? 'Play slideshow' : 'Pause slideshow'); };
+  pauseBtn.addEventListener('click', () => setPaused(!hero.classList.contains('paused')));
+  if (RM.matches) setPaused(true);
+
+  hero.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  /* swipe / drag: direction follows the gesture */
+  let sx = 0, sy = 0, down = false;
+  /* swipes are for touch and pen only, so mouse hovering/clicking can never trigger a slide change */
+  hero.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' || e.button !== 0) return; down = true; sx = e.clientX; sy = e.clientY; });
+  hero.addEventListener('pointerup', e => {
+    if (!down) return; down = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) { dx < 0 ? next() : prev(); }
+  });
+  hero.addEventListener('pointercancel', () => down = false);
+
+  /* pointer depth: background and product drift against each other */
+  if (FINE.matches && !RM.matches) {
+    let raf = 0, px = 0, py = 0, rect = null;
+    const measure = () => { rect = hero.getBoundingClientRect(); };
+    hero.addEventListener('pointerenter', measure);
+    addEventListener('scroll', () => { rect = null; }, { passive: true });
+    addEventListener('resize', () => { rect = null; });
+    hero.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      if (!rect) measure();
+      px = (e.clientX - rect.left) / rect.width - .5; py = (e.clientY - rect.top) / rect.height - .5;
+      if (!raf) raf = requestAnimationFrame(tiltTo);
+    });
+    hero.addEventListener('pointerleave', () => { px = 0; py = 0; tiltTo(); });
+    /* write transforms straight onto the active slide's pouches (no inherited CSS vars, so no style recalc across the hero) */
+    /* hover tilt sits out while a slide change runs; it resumes on the new slide once it has landed */
+    tiltTo = function () {
+      raf = 0;
+      if (busy) return;
+      $$('.slide.is-active .tilt', hero).forEach(t => {
+        const d = parseFloat(t.parentElement.style.getPropertyValue('--d')) || 1;
+        t.style.translate = `${(px * 30 * d).toFixed(1)}px ${(py * 20 * d).toFixed(1)}px`;
+        t.style.rotate = `${(px * 5 * d).toFixed(2)}deg`;
+      });
+    }
+  }
+
+  /* scroll parallax for tiles (transform only, content is always visible) */
+  const par = $$('[data-par]');
+  let sraf = 0;
+  const parallax = () => {
+    sraf = 0; const vh = innerHeight;
+    par.forEach(el => {
+      const r = el.closest('.tile').getBoundingClientRect();
+      if (r.bottom < -100 || r.top > vh + 100) return;
+      const p = (r.top + r.height / 2 - vh / 2) / vh;
+      const y = p * parseFloat(el.dataset.par) * 100;
+      el.style.translate = el.classList.contains('hands') ? `-50% ${(29.06 + y).toFixed(2)}%` : `0 ${y.toFixed(2)}%`;
+    });
+  };
+  if (!RM.matches) {
+    addEventListener('scroll', () => { if (!sraf) sraf = requestAnimationFrame(parallax); }, { passive: true });
+    parallax();
+  }
+
+  /* warm the other slides once the first is in */
+  addEventListener('load', () => setTimeout(() => slides.forEach(prep), 400));
+
+  /* ── load sequence ── */
+  if (!RM.matches) {
+    const els = k => $$(`[data-intro="${k}"]`);
+    const firstImg = $('.slide.is-active .s-bg img'), pouchImg = $('.slide.is-active .s-pouch img');
+    const ready = Promise.race([
+      Promise.all([firstImg, pouchImg].map(i => i.decode ? i.decode().catch(() => {}) : Promise.resolve())),
+      new Promise(r => setTimeout(r, 1400))
+    ]);
+    /* hold the first fill until the intro lands */
+    dots[0].classList.remove('on');
+    const intro = [];
+    const hold = { opacity: 0 };
+    [...els('nav'), ...els('bg'), ...els('pouch'), ...els('copy'), ...els('btn'), ...els('dots')].forEach(el => intro.push(el.animate([hold, hold], { duration: 1e6 })));
+    ready.then(() => {
+      intro.forEach(a => a.cancel());
+      const OUT = 'cubic-bezier(.16,1,.3,1)';
+      els('bg').forEach(el => el.animate([{ opacity: 0, transform: 'scale(1.14)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1800, easing: OUT, fill: 'backwards' }));
+      els('nav').forEach((el, k) => el.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 300 + k * 60, easing: OUT, fill: 'backwards' }));
+      els('pouch').forEach(el => el.animate([{ opacity: 0, transform: 'translateY(60px) rotate(-14deg) scale(.86)' }, { opacity: 1, transform: 'none' }], { duration: 1500, delay: 220, easing: 'cubic-bezier(.2,1.25,.35,1)', fill: 'backwards' }));
+      els('copy').forEach(el => el.animate([{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'none' }], { duration: 1000, delay: 520, easing: OUT, fill: 'backwards' }));
+      els('btn').forEach(el => el.animate([{ opacity: 0, transform: 'translateY(34px)' }, { opacity: 1, transform: 'none' }], { duration: 1100, delay: 640, easing: OUT, fill: 'backwards' }));
+      els('dots').forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800, delay: 900, easing: 'ease', fill: 'backwards' }));
+      setTimeout(() => { if (cur === 0 && !busy) setDot(0); }, 900);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
