@@ -133,7 +133,7 @@ img{display:block;max-width:100%}
 
 /* ───────── HERO SLIDER ───────── */
 .hero{position:relative;height:clamp(560px,175vw,720px);overflow:hidden;background:#1f1708;touch-action:pan-y;isolation:isolate}
-.slide{position:absolute;inset:0;visibility:hidden;z-index:0;overflow:hidden}
+.slide{position:absolute;inset:0;visibility:hidden;z-index:0;overflow:hidden;container-type:size}
 .slide.is-active,.slide.is-out{visibility:visible;z-index:1}
 .slide.is-in{visibility:visible;z-index:2}
 /* backgrounds: one pre-cropped image per breakpoint with every gradient/dim baked in; only transform + opacity ever animate */
@@ -144,13 +144,12 @@ img{display:block;max-width:100%}
   padding-top:calc(var(--bar-h) + 10px);padding-bottom:62px;padding-left:var(--gx);padding-right:var(--gxr);text-align:center}
 .slide[data-align="start"] .s-stage{align-items:flex-start;text-align:left;gap:16px}
 .s-pouch{flex:0 1 auto;height:54%;min-height:0;display:flex;justify-content:center;align-items:center;will-change:transform}
-.tilt{height:100%;transition:translate .9s cubic-bezier(.2,.8,.2,1),rotate .9s cubic-bezier(.2,.8,.2,1)}
+.tilt{height:100%}  /* hover tilt is eased in JS, inside the slider's frame loop */
 .s-pouch img{height:100%;width:auto;max-width:82vw;object-fit:contain;filter:drop-shadow(0 30px 40px rgba(0,0,0,.45));animation:float 7s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-12px) rotate(1.4deg)}}
 /* G2: two pouches overlapping, black set back, yellow forward; each travels at its own speed */
 /* Positions are solved from each pouch's solid outline (the PNGs carry a soft shadow off to the right/bottom),
    so the pair is centred on the pouches themselves, not on their image boxes. Units are the slide's size (cqw/cqh). */
-.slide[data-k="g2"]{container-type:size}
 .duo{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
 .duo .s-pouch{position:absolute;transform-origin:33% 47%}
 /* phone: fanned pair, each pouch ~42% of the hero tall, centred on the column above the copy */
@@ -179,10 +178,6 @@ img{display:block;max-width:100%}
 .dot .track{display:block;height:3px;border-radius:20px;background:var(--t-30);overflow:hidden;transition:background-color .2s}
 .dot:hover .track{background:rgba(255,255,255,.5)}
 .dot .fill{display:block;height:100%;background:var(--paper);border-radius:20px;transform-origin:left;transform:scaleX(0)}
-.dot.on .fill{animation:fill var(--dur,6500ms) linear forwards}
-.dot.done .fill{transform:scaleX(1)}
-.hero.paused .dot.on .fill{animation-play-state:paused}
-@keyframes fill{to{transform:scaleX(1)}}
 .ctrls{position:absolute;z-index:5;right:calc(33px + env(safe-area-inset-right,0px));bottom:22px;display:flex;gap:12px}
 .ctrl{width:39px;height:39px;border-radius:20px;display:grid;place-items:center;color:#000;
   background:rgba(255,255,255,.62);transition:background-color .2s,scale .25s var(--ease-out)}
@@ -233,8 +228,16 @@ img{display:block;max-width:100%}
   .duo .p-back{height:74cqh;top:17.5cqh;left:calc(50% - 54.8cqh);rotate:-3deg}
   .duo .p-front{height:73.2cqh;top:18.4cqh;left:calc(50% - 6.7cqh);rotate:.24deg}
   .slide[data-k="g2"] .s-copy,.slide[data-k="g2"] .s-btn{position:relative;z-index:3}
-  .slide[data-align="start"] .s-stage{padding-left:max(6vw,var(--gx));padding-bottom:86px}
+  /* Figma 415:8492 / 560:9473: copy sits bottom-left at 67/1797 of the width, progress bars 22px under the button */
+  .hero{--copy-x:max(3.73vw, var(--gx))}
+  .slide[data-align="start"] .s-stage,.slide[data-k="ultra"] .s-stage{padding-left:var(--copy-x);padding-bottom:76px;align-items:flex-start;text-align:left;gap:22px}
   .slide[data-align="start"] .s-copy{max-width:420px}
+  .slide[data-k="ultra"] .s-copy{max-width:361px;gap:10px}
+  .slide[data-k="ultra"] .display{white-space:nowrap}
+  .dots{left:var(--copy-x);bottom:45px;transform:none}
+  /* Ultra: pouch centred and large (538/800 of the hero), big ULTRA letters are baked into the background */
+  .slide[data-k="ultra"] .s-pouch{position:absolute;left:50%;top:18.4cqh;height:67.25cqh;translate:-50% 0}
+  .slide[data-k="ultra"] .s-pouch img{max-width:none}
   .tiles{grid-template-columns:1fr 1fr}
   .tile{height:clamp(560px,38.4vw,800px)}
   .hands{width:53.6%}
@@ -252,7 +255,6 @@ img{display:block;max-width:100%}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important}
-  .dot.on .fill{animation:none;transform:scaleX(1)}
   .tilt{translate:none!important;rotate:none!important}
 }
 </style>
@@ -544,116 +546,101 @@ img{display:block;max-width:100%}
   burger.addEventListener('click', () => toggleM());
   $$('.mnav [data-close]').forEach(a => a.addEventListener('click', () => toggleM(false)));
 
-  /* ── hero slider ── */
+  /* ── hero slider ──
+     One requestAnimationFrame loop owns every moving part of the hero: slide transitions, the progress bars,
+     autoplay and the hover tilt. Each frame computes every layer's position from the clock, so a transition can't be
+     left half-finished, two effects never fight over the same element, and a press mid-transition is simply queued. */
   const hero = $('#hero'), slides = $$('.slide', hero), dots = $$('.dot', hero), live = $('#live');
-  const N = slides.length;
-  let cur = 0, busy = false, pending = null, tiltTo = null;
-  /* cheap dimmer per slide (animating filter on a full-bleed photo repaints every frame and stutters) */
+  const N = slides.length, DUR = 6500, END = 1840;
   slides.forEach(s => { const d = document.createElement('div'); d.className = 's-dim'; $('.s-bg', s).appendChild(d); });
-  const L = s => ({ bg: $('.s-bg', s), img: $('.s-bg img', s), dim: $('.s-dim', s), pouches: $$('.s-pouch', s), copy: $('.s-copy', s), btn: $('.s-btn', s) });
-  /* decode every slide image up front so nothing pops in mid-transition */
+  const L = s => ({ s, bg: $('.s-bg', s), img: $('.s-bg img', s), dim: $('.s-dim', s), pouches: $$('.s-pouch', s), tilts: $$('.tilt', s), copy: $('.s-copy', s), btn: $('.s-btn', s) });
+  const layers = slides.map(L);
   const decoded = new WeakMap();
   const prep = s => {
     if (!decoded.has(s)) decoded.set(s, Promise.all($$('img', s).map(im => { im.loading = 'eager'; return im.decode ? im.decode().catch(() => {}) : Promise.resolve(); })));
     return decoded.get(s);
   };
 
-  function setDot(i) {
-    dots.forEach((d, k) => { d.classList.remove('on'); d.removeAttribute('aria-current'); });
-    void dots[i].offsetWidth; /* restart fill */
-    dots[i].classList.add('on'); dots[i].setAttribute('aria-current', 'true');
-  }
+  /* cubic-bezier evaluated by bisection: slow-ish but exact and can't diverge */
+  const bez = (x1, y1, x2, y2) => {
+    const f = (u, a, b) => 3 * (1 - u) * (1 - u) * u * a + 3 * (1 - u) * u * u * b + u * u * u;
+    return t => { if (t <= 0) return 0; if (t >= 1) return 1; let lo = 0, hi = 1, u = t; for (let i = 0; i < 20; i++) { u = (lo + hi) / 2; if (f(u, x1, x2) < t) lo = u; else hi = u; } return f(u, y1, y2); };
+  };
+  const IO = bez(.76, 0, .2, 1), OUT = bez(.16, 1, .3, 1), IN = bez(.55, 0, .8, .2), PIN = bez(.3, 0, .7, .4), LIN = t => Math.min(1, Math.max(0, t));
+  const seg = (t, start, dur, e) => e(Math.min(1, Math.max(0, (t - start) / dur)));
+  const tx = (x, unit, r) => `translate3d(${x.toFixed(3)}${unit},0,0)` + (r ? ` rotate(${r.toFixed(2)}deg)` : '');
 
-  function go(i, dir) {
-    i = (i + N) % N;
-    if (i === cur) return;
-    if (busy) { pending = { to: i }; return; }
-    busy = true;
-    const ready = Promise.race([prep(slides[i]), new Promise(r => setTimeout(r, 450))]);
-    ready.then(() => run_(i, dir));
-  }
-  function run_(i, dir) {
-    const A = slides[cur], B = slides[i], a = L(A), b = L(B);
-    /* incoming pouches start untilted (snap, they're off-screen); outgoing ones ease back to neutral as they leave */
-    $$('.tilt', B).forEach(t => { t.style.transition = 'none'; t.style.translate = ''; t.style.rotate = ''; void t.offsetWidth; t.style.transition = ''; });
-    $$('.tilt', A).forEach(t => { t.style.translate = ''; t.style.rotate = ''; });
-    B.classList.add('is-in'); A.classList.add('is-out');
-    setDot(i);
-    live.textContent = B.getAttribute('aria-label') + ': ' + $('.display', B).textContent;
-    const run = [];
-    const an = (el, k, o) => { if (el) run.push(el.animate(k, o)); };
-    const X = v => `translate3d(${v},0,0)`;
+  let cur = 0, tr = null, queued = null, paused = false, introDone = RM.matches, elapsed = 0, lastT = performance.now();
+  let introAnims = [];
+  let fillShown = [];
 
-    if (RM.matches) {
-      an(B, [{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: 'ease' });
-    } else {
-      const IO = 'cubic-bezier(.76,0,.2,1)', OUT = 'cubic-bezier(.16,1,.3,1)', IN = 'cubic-bezier(.55,0,.8,.2)';
-      const D = 1100;
-      /* background: new photo wipes in from the pressed side while its image counter-drifts; old one is pushed slower and dims */
-      an(b.bg, [{ transform: X(dir * 100 + '%') }, { transform: X(0) }], { duration: D, easing: IO });
-      an(b.img, [{ transform: X(-dir * 45 + '%') }, { transform: X(0) }], { duration: D, easing: IO });
-      an(a.bg, [{ transform: X(0) }, { transform: X(-dir * 32 + '%') }], { duration: D, easing: IO, fill: 'forwards' });
-      an(a.dim, [{ opacity: 0 }, { opacity: .65 }], { duration: D, easing: IO, fill: 'forwards' });
-      /* product: fastest, most distant layer */
-      /* with two pouches, the back one leaves first and arrives first; the front one travels further */
-      /* outgoing product starts moving on frame one and is gone (faded) before the incoming one reaches the middle, so they never cross */
-      a.pouches.forEach((el, k) => an(el, [
-        { transform: 'none', opacity: 1 },
-        { opacity: 0, offset: .5 },
-        { transform: X(-dir * (45 + k * 15) + 'vw') + ` rotate(${-dir * (12 + k * 5)}deg)`, opacity: 0 }
-      ], { duration: 520, easing: 'cubic-bezier(.3,0,.7,.4)', fill: 'forwards' }));
-      b.pouches.forEach((el, k) => an(el, [{ transform: X(dir * (70 + k * 30) + 'vw') + ` rotate(${dir * (20 + k * 8)}deg)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 1250 + k * 120, delay: 360 + k * 110, easing: OUT, fill: 'backwards' }));
-      /* text and button travel separately: text first and shorter, button later and further */
-      an(a.copy, [{ transform: 'none', opacity: 1 }, { transform: X(-dir * 110 + 'px'), opacity: 0 }], { duration: 360, easing: IN, fill: 'forwards' });
-      an(a.btn, [{ transform: 'none', opacity: 1 }, { transform: X(-dir * 220 + 'px'), opacity: 0 }], { duration: 460, delay: 40, easing: IN, fill: 'forwards' });
-      an(b.copy, [{ transform: X(dir * 160 + 'px'), opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 950, delay: 540, easing: OUT, fill: 'backwards' });
-      an(b.btn, [{ transform: X(dir * 340 + 'px'), opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 1100, delay: 660, easing: OUT, fill: 'backwards' });
-    }
-    Promise.all(run.map(x => x.finished)).catch(() => {}).then(() => {
-      A.classList.remove('is-active', 'is-out');
-      B.classList.remove('is-in'); B.classList.add('is-active');
-      run.forEach(x => x.cancel());
-      cur = i; busy = false;
-      if (FINE.matches && typeof tiltTo === 'function') tiltTo();
-      if (pending) {
-        const q = pending; pending = null;
-        /* queued presses are resolved against the slide we just landed on, so back-back really goes back twice */
-        if (q.step) go(cur + q.step, q.step);
-        else if (q.to !== cur) go(q.to, q.to > cur ? 1 : -1);
-      }
+  function clear(l) {
+    [l.bg, l.img, l.copy, l.btn, ...l.pouches].forEach(el => { if (el) { el.style.transform = ''; el.style.opacity = ''; } });
+    if (l.dim) l.dim.style.opacity = '';
+    l.s.style.opacity = '';
+  }
+  function draw(t) {
+    const a = layers[tr.from], b = layers[tr.to], dir = tr.dir;
+    if (RM.matches) { b.s.style.opacity = LIN(t / 350); return; }
+    let q = seg(t, 0, 1100, IO);
+    b.bg.style.transform = tx(dir * 100 * (1 - q), '%');
+    b.img.style.transform = tx(-dir * 45 * (1 - q), '%');
+    a.bg.style.transform = tx(-dir * 32 * q, '%');
+    a.dim.style.opacity = (.65 * q).toFixed(3);
+    a.pouches.forEach((el, k) => {
+      const m = seg(t, k * 30, 520, PIN);
+      el.style.transform = tx(-dir * (45 + 15 * k) * m, 'vw', -dir * (12 + 5 * k) * m);
+      el.style.opacity = (1 - seg(t, k * 30, 260, LIN)).toFixed(3);
     });
+    b.pouches.forEach((el, k) => {
+      const m = seg(t, 360 + 110 * k, 1250 + 120 * k, OUT);
+      el.style.transform = tx(dir * (70 + 30 * k) * (1 - m), 'vw', dir * (20 + 8 * k) * (1 - m));
+      el.style.opacity = m.toFixed(3);
+    });
+    q = seg(t, 0, 360, IN);   a.copy.style.transform = tx(-dir * 110 * q, 'px'); a.copy.style.opacity = (1 - q).toFixed(3);
+    q = seg(t, 40, 460, IN);  a.btn.style.transform = tx(-dir * 220 * q, 'px');  a.btn.style.opacity = (1 - q).toFixed(3);
+    q = seg(t, 540, 950, OUT); b.copy.style.transform = tx(dir * 160 * (1 - q), 'px'); b.copy.style.opacity = q.toFixed(3);
+    q = seg(t, 660, 1100, OUT); b.btn.style.transform = tx(dir * 340 * (1 - q), 'px'); b.btn.style.opacity = q.toFixed(3);
   }
-  const next = () => busy ? (pending = { step: 1 }) : go(cur + 1, 1);
-  const prev = () => busy ? (pending = { step: -1 }) : go(cur - 1, -1);
-  $('#next').addEventListener('click', next);
-  $('#prev').addEventListener('click', prev);
-  dots.forEach((d, k) => d.addEventListener('click', () => busy ? (pending = { to: k }) : go(k, k > cur ? 1 : -1)));
-  dots.forEach(d => $('.fill', d).addEventListener('animationend', () => { if (d.classList.contains('on')) next(); }));
 
-  const pauseBtn = $('#pause');
-  const setPaused = p => { hero.classList.toggle('paused', p); pauseBtn.setAttribute('aria-label', p ? 'Play slideshow' : 'Pause slideshow'); };
-  pauseBtn.addEventListener('click', () => setPaused(!hero.classList.contains('paused')));
-  if (RM.matches) setPaused(true);
+  function request(to, dir) {
+    to = (to % N + N) % N;
+    if (tr) { queued = { to }; return; }
+    if (to !== cur) start(to, dir);
+  }
+  function step(d) { if (tr) queued = { step: d }; else start((cur + d + N) % N, d); }
 
-  hero.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
-  });
+  function start(to, dir) {
+    /* the load-in animations use the same elements, so retire them before a transition takes over */
+    introAnims.forEach(x => x.cancel()); introAnims = []; introDone = true;
+    tr = { from: cur, to, dir, t0: 0, ready: false };
+    dots.forEach((d, k) => k === to ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'));
+    live.textContent = slides[to].getAttribute('aria-label') + ': ' + $('.display', slides[to]).textContent;
+    const go = () => {
+      if (!tr || tr.ready) return;
+      tr.ready = true; tr.t0 = performance.now();
+      draw(0);                                   /* first frame written before the slide becomes visible: no flash */
+      slides[tr.to].classList.add('is-in'); slides[tr.from].classList.add('is-out');
+    };
+    Promise.race([prep(slides[to]), new Promise(r => setTimeout(r, 450))]).then(go);
+  }
+  function settle() {
+    const A = slides[tr.from], B = slides[tr.to];
+    clear(layers[tr.from]); clear(layers[tr.to]);
+    layers[tr.from].tilts.forEach(t => { t.style.translate = ''; t.style.rotate = ''; });
+    A.classList.remove('is-active', 'is-out'); B.classList.remove('is-in'); B.classList.add('is-active');
+    cur = tr.to; tr = null; elapsed = 0;
+    if (queued) {
+      const q = queued; queued = null;
+      if (q.step) start((cur + q.step + N) % N, q.step);
+      else if (q.to !== cur) start(q.to, q.to > cur ? 1 : -1);
+    }
+  }
 
-  /* swipe / drag: direction follows the gesture */
-  let sx = 0, sy = 0, down = false;
-  /* swipes are for touch and pen only, so mouse hovering/clicking can never trigger a slide change */
-  hero.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' || e.button !== 0) return; down = true; sx = e.clientX; sy = e.clientY; });
-  hero.addEventListener('pointerup', e => {
-    if (!down) return; down = false;
-    const dx = e.clientX - sx, dy = e.clientY - sy;
-    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) { dx < 0 ? next() : prev(); }
-  });
-  hero.addEventListener('pointercancel', () => down = false);
-
-  /* pointer depth: background and product drift against each other */
-  if (FINE.matches && !RM.matches) {
-    let raf = 0, px = 0, py = 0, rect = null;
+  /* hover tilt: target follows the mouse, current eases toward it every frame */
+  const tilt = { x: 0, y: 0, tx: 0, ty: 0, on: FINE.matches && !RM.matches, drawn: false };
+  if (tilt.on) {
+    let rect = null;
     const measure = () => { rect = hero.getBoundingClientRect(); };
     hero.addEventListener('pointerenter', measure);
     addEventListener('scroll', () => { rect = null; }, { passive: true });
@@ -661,22 +648,70 @@ img{display:block;max-width:100%}
     hero.addEventListener('pointermove', e => {
       if (e.pointerType !== 'mouse') return;
       if (!rect) measure();
-      px = (e.clientX - rect.left) / rect.width - .5; py = (e.clientY - rect.top) / rect.height - .5;
-      if (!raf) raf = requestAnimationFrame(tiltTo);
+      tilt.tx = (e.clientX - rect.left) / rect.width - .5; tilt.ty = (e.clientY - rect.top) / rect.height - .5;
     });
-    hero.addEventListener('pointerleave', () => { px = 0; py = 0; tiltTo(); });
-    /* write transforms straight onto the active slide's pouches (no inherited CSS vars, so no style recalc across the hero) */
-    /* hover tilt sits out while a slide change runs; it resumes on the new slide once it has landed */
-    tiltTo = function () {
-      raf = 0;
-      if (busy) return;
-      $$('.slide.is-active .tilt', hero).forEach(t => {
-        const d = parseFloat(t.parentElement.style.getPropertyValue('--d')) || 1;
-        t.style.translate = `${(px * 30 * d).toFixed(1)}px ${(py * 20 * d).toFixed(1)}px`;
-        t.style.rotate = `${(px * 5 * d).toFixed(2)}deg`;
-      });
-    }
+    hero.addEventListener('pointerleave', () => { tilt.tx = 0; tilt.ty = 0; });
   }
+  function drawTilt(dt) {
+    const gx = tr ? 0 : tilt.tx, gy = tr ? 0 : tilt.ty, k = 1 - Math.exp(-dt / 140);
+    tilt.x += (gx - tilt.x) * k; tilt.y += (gy - tilt.y) * k;
+    const still = Math.abs(tilt.x) < .0005 && Math.abs(tilt.y) < .0005;
+    if (still && !tilt.drawn) return;
+    const targets = tr ? [...layers[tr.from].tilts, ...layers[tr.to].tilts] : layers[cur].tilts;
+    targets.forEach(t => {
+      const d = parseFloat(t.parentElement.style.getPropertyValue('--d')) || 1;
+      t.style.translate = still ? '' : `${(tilt.x * 30 * d).toFixed(1)}px ${(tilt.y * 20 * d).toFixed(1)}px`;
+      t.style.rotate = still ? '' : `${(tilt.x * 5 * d).toFixed(2)}deg`;
+    });
+    tilt.drawn = !still;
+  }
+
+  function drawDots() {
+    dots.forEach((d, k) => {
+      const v = (!tr && k === cur) ? Math.min(1, elapsed / DUR) : 0;
+      if (fillShown[k] !== v) { d.firstElementChild.firstElementChild.style.transform = `scaleX(${v.toFixed(4)})`; fillShown[k] = v; }
+    });
+  }
+
+  function loop(now) {
+    const dt = Math.min(100, now - lastT); lastT = now;
+    if (tr && tr.ready) {
+      const t = now - tr.t0;
+      if (t >= (RM.matches ? 350 : END)) settle(); else draw(t);
+    }
+    if (!tr && !paused && introDone && !document.hidden) {
+      elapsed += dt;
+      if (elapsed >= DUR) step(1);
+    }
+    drawDots();
+    if (tilt.on) drawTilt(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  $('#next').addEventListener('click', () => step(1));
+  $('#prev').addEventListener('click', () => step(-1));
+  dots.forEach((d, k) => d.addEventListener('click', () => request(k, k > (tr ? tr.to : cur) ? 1 : -1)));
+
+  const pauseBtn = $('#pause');
+  const setPaused = p => { paused = p; hero.classList.toggle('paused', p); pauseBtn.setAttribute('aria-label', p ? 'Play slideshow' : 'Pause slideshow'); };
+  pauseBtn.addEventListener('click', () => setPaused(!paused));
+  if (RM.matches) setPaused(true);
+
+  hero.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  });
+
+  /* swipes are touch and pen only, so the mouse can never change slides by accident */
+  let sx = 0, sy = 0, down = false;
+  hero.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' || e.button !== 0) return; down = true; sx = e.clientX; sy = e.clientY; });
+  hero.addEventListener('pointerup', e => {
+    if (!down) return; down = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) step(dx < 0 ? 1 : -1);
+  });
+  hero.addEventListener('pointercancel', () => down = false);
 
   /* scroll parallax for tiles (transform only, content is always visible) */
   const par = $$('[data-par]');
@@ -699,7 +734,7 @@ img{display:block;max-width:100%}
   /* warm the other slides once the first is in */
   addEventListener('load', () => setTimeout(() => slides.forEach(prep), 400));
 
-  /* ── load sequence ── */
+  /* ── load sequence (cancelled the moment the slider takes over) ── */
   if (!RM.matches) {
     const els = k => $$(`[data-intro="${k}"]`);
     const firstImg = $('.slide.is-active .s-bg img'), pouchImg = $('.slide.is-active .s-pouch img');
@@ -707,21 +742,22 @@ img{display:block;max-width:100%}
       Promise.all([firstImg, pouchImg].map(i => i.decode ? i.decode().catch(() => {}) : Promise.resolve())),
       new Promise(r => setTimeout(r, 1400))
     ]);
-    /* hold the first fill until the intro lands */
-    dots[0].classList.remove('on');
-    const intro = [];
     const hold = { opacity: 0 };
-    [...els('nav'), ...els('bg'), ...els('pouch'), ...els('copy'), ...els('btn'), ...els('dots')].forEach(el => intro.push(el.animate([hold, hold], { duration: 1e6 })));
+    [...els('nav'), ...els('bg'), ...els('pouch'), ...els('copy'), ...els('btn'), ...els('dots')].forEach(el => introAnims.push(el.animate([hold, hold], { duration: 1e6 })));
     ready.then(() => {
-      intro.forEach(a => a.cancel());
-      const OUT = 'cubic-bezier(.16,1,.3,1)';
-      els('bg').forEach(el => el.animate([{ opacity: 0, transform: 'scale(1.14)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1800, easing: OUT, fill: 'backwards' }));
-      els('nav').forEach((el, k) => el.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 300 + k * 60, easing: OUT, fill: 'backwards' }));
-      els('pouch').forEach(el => el.animate([{ opacity: 0, transform: 'translateY(60px) rotate(-14deg) scale(.86)' }, { opacity: 1, transform: 'none' }], { duration: 1500, delay: 220, easing: 'cubic-bezier(.2,1.25,.35,1)', fill: 'backwards' }));
-      els('copy').forEach(el => el.animate([{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'none' }], { duration: 1000, delay: 520, easing: OUT, fill: 'backwards' }));
-      els('btn').forEach(el => el.animate([{ opacity: 0, transform: 'translateY(34px)' }, { opacity: 1, transform: 'none' }], { duration: 1100, delay: 640, easing: OUT, fill: 'backwards' }));
-      els('dots').forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800, delay: 900, easing: 'ease', fill: 'backwards' }));
-      setTimeout(() => { if (cur === 0 && !busy) setDot(0); }, 900);
+      introAnims.forEach(a => a.cancel());
+      const OUTc = 'cubic-bezier(.16,1,.3,1)';
+      els('nav').forEach((el, k) => el.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 900, delay: 300 + k * 60, easing: OUTc, fill: 'backwards' }));
+      if (introDone) return;               /* someone already changed slides: leave the hero to the slider */
+      const A = [];
+      els('bg').forEach(el => A.push(el.animate([{ opacity: 0, transform: 'scale(1.14)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1800, easing: OUTc, fill: 'backwards' })));
+      els('pouch').forEach(el => A.push(el.animate([{ opacity: 0, transform: 'translateY(60px) rotate(-14deg) scale(.86)' }, { opacity: 1, transform: 'none' }], { duration: 1500, delay: 220, easing: 'cubic-bezier(.2,1.25,.35,1)', fill: 'backwards' })));
+      els('copy').forEach(el => A.push(el.animate([{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'none' }], { duration: 1000, delay: 520, easing: OUTc, fill: 'backwards' })));
+      els('btn').forEach(el => A.push(el.animate([{ opacity: 0, transform: 'translateY(34px)' }, { opacity: 1, transform: 'none' }], { duration: 1100, delay: 640, easing: OUTc, fill: 'backwards' })));
+      els('dots').forEach(el => A.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800, delay: 900, easing: 'ease', fill: 'backwards' })));
+      introAnims = A;
+      setTimeout(() => { introDone = true; }, 900);
+      Promise.all(A.map(x => x.finished)).then(() => { A.forEach(x => x.cancel()); if (introAnims === A) introAnims = []; }).catch(() => {});
     });
   }
 })();
